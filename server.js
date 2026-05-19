@@ -5,10 +5,12 @@
   const rateLimit = require("express-rate-limit");
   const logger = require("./middleware/logger");
   const shippingRoutes = require("./routes/shipping");
+  const paymentRoutes  = require("./routes/payment");
 
   const app = express();
   const PORT = process.env.PORT || 3001;
 
+  app.set('trust proxy', 1);
   app.use(helmet());
   app.use(cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -24,6 +26,7 @@
   });
 
   app.use("/shipping", limiter, shippingRoutes);
+  app.use("/payment",  limiter, paymentRoutes);
 
   app.get("/health", function(req, res) {
     res.json({ ok: true, ts: new Date().toISOString() });
