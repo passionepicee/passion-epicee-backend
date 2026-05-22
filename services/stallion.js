@@ -5,13 +5,13 @@
   const MARKUP        = parseFloat(process.env.SHIPPING_MARKUP || '0.10');
 
   const ORIGIN_ADDRESS = {
-    name:          process.env.ORIGIN_NAME,
-    address1:      process.env.ORIGIN_ADDRESS,
-    city:          process.env.ORIGIN_CITY,
-    province_code: process.env.ORIGIN_PROVINCE,
-    postal_code:   process.env.ORIGIN_POSTAL,
-    country_code:  process.env.ORIGIN_COUNTRY,
-    phone:         process.env.ORIGIN_PHONE,
+    name:          process.env.ORIGIN_NAME     || 'Passion Épicée',
+    address1:      process.env.ORIGIN_ADDRESS  || '5300 Boulevard Saint-Martin Ouest',
+    city:          process.env.ORIGIN_CITY     || 'Laval',
+    province_code: process.env.ORIGIN_PROVINCE || 'QC',
+    postal_code:   process.env.ORIGIN_POSTAL   || 'H7T2Y1',
+    country_code:  process.env.ORIGIN_COUNTRY  || 'CA',
+    phone:         process.env.ORIGIN_PHONE    || '',
   };
 
   function headers(idempotencyKey = null) {
@@ -66,10 +66,11 @@
   async function getRates({ toAddress, weight, weightUnit, length, width,
   height, sizeUnit, items }) {
     const body = {
-      to_address:  toAddress,
-      weight_unit: weightUnit || 'lbs',
+      from_address: ORIGIN_ADDRESS,
+      to_address:   toAddress,
+      weight_unit:  weightUnit || 'lbs',
       weight,
-      size_unit:   sizeUnit || 'in',
+      size_unit:    sizeUnit || 'in',
       length,
       width,
       height,
@@ -88,6 +89,7 @@
     const idempotencyKey = `order_${orderId}_${Date.now()}`;
 
     const body = {
+      from_address: ORIGIN_ADDRESS,
       to_address:   toAddress,
       postage_type: { name: postageType },
       package_type: { name: 'Parcel' },
