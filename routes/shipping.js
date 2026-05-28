@@ -24,18 +24,49 @@ const express = require("express");
 
   router.post("/rates", async function(req, res) {
     try {
-      validateAddress(req.body.to_address);
-      validatePackage(req.body);
-      const rates = await stallion.getRates({
-        toAddress: req.body.to_address,
-        weight: req.body.weight,
-        weightUnit: req.body.weight_unit,
-        length: req.body.length,
-        width: req.body.width,
-        height: req.body.height,
-        sizeUnit: req.body.size_unit,
-        items: req.body.items
+      // Format envoyé par le frontend : destination + packages
+      const dest     = req.body.destination || {};
+      const pkg      = (req.body.packages && req.body.packages[0]) || {};
+      const postal   = (dest.postal_code || '').replace(/\s/g, '').toUpperCase();
+      const province = dest.province || dest.province_code || 'QC';
+      const country  = dest.country  || dest.country_code  || 'CA';
+      const weight   = pkg.weight || req.body.weight || 1;
+      const length   = pkg.length || req.body.length || 20;
+      const width    = pkg.width  || req.body.width  || 15;
+      const height   = pkg.height || req.body.height || 10;
+
+      if (!postal) throw new Error("Code postal requis.");
+
+      const toAddress = {
+        name:          "Client",
+        address1:      "N/A",
+        city:          "N/A",
+        province_code: province,
+        postal_code:   postal,
+        country_code:  country,
+      };
+
+      const stallionRates = await stallion.getRates({
+        toAddress,
+        weight,
+        weightUnit: "lbs",
+        length,
+        width,
+        height,
+        sizeUnit: "in",
+        items: req.body.items || [],
       });
+
+      const rates = stallionRates.map(function(r) {
+        return {
+          service_code:   r.id || r.carrier,
+          service_name:   r.carrier || r.id,
+          total_charge:   (r.price_cents / 100).toFixed(2),
+          estimated_days: r.delivery_days ? r.delivery_days.replace(/\D.*/, '') : null,
+          currency:       r.currency || "CAD",
+        };
+      });
+
       return res.json({ success: true, rates: rates });
     } catch (err) {
       return res.status(400).json({ success: false, error: err.message });
