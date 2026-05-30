@@ -38,6 +38,33 @@ router.post("/create-intent", async function (req, res) {
   }
 });
 
+// POST /payment/update-intent
+// Attache la référence de commande au PaymentIntent une fois l'orderId connu
+// (le PaymentIntent est créé AVANT que la commande n'existe, donc order_id arrive
+//  vide à la création — on le complète ici).
+router.post("/update-intent", async function (req, res) {
+  try {
+    const { paymentIntentId, orderId, orderReference } = req.body;
+
+    if (!paymentIntentId) {
+      return res.status(400).json({ success: false, error: "paymentIntentId requis." });
+    }
+
+    await stripe.paymentIntents.update(paymentIntentId, {
+      description: `Passion Épicée — Commande${orderId ? " #" + orderId : ""}`,
+      metadata: {
+        order_id:        String(orderId || ""),
+        order_reference: String(orderReference || orderId || ""),
+      },
+    });
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[Stripe update-intent]", err.message);
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // POST /payment/confirm-order
 // Envoie l'email de confirmation après commande
 router.post("/confirm-order", async function (req, res) {
