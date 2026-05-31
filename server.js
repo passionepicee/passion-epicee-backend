@@ -1,4 +1,5 @@
-﻿require("dotenv").config();
+﻿// Deploy marker: 2026-05-30 — inclut la route /payment/update-intent
+require("dotenv").config();
   const express = require("express");
   const cors = require("cors");
   const helmet = require("helmet");
