@@ -44,8 +44,10 @@
     return data;
   }
 
-  function applyMarkup(cents) {
-    return Math.ceil(cents * (1 + MARKUP));
+  // Stallion renvoie les montants en DOLLARS (ex. total: 7.54) → on convertit en cents
+  // (et on applique la marge éventuelle SHIPPING_MARKUP).
+  function applyMarkup(dollars) {
+    return Math.ceil(dollars * 100 * (1 + MARKUP));
   }
 
   function formatRate(rate) {
@@ -63,6 +65,19 @@
     };
   }
 
+  // Stallion exige description + currency + quantity + value sur chaque article
+  // (sinon HTTP 422). On normalise ici quelle que soit la forme reçue du frontend.
+  function normalizeItems(items) {
+    return (items || []).map(function (it) {
+      return Object.assign({}, it, {
+        description: it.description || it.name || 'Article',
+        currency:    it.currency || 'CAD',
+        quantity:    it.quantity || it.qty || 1,
+        value:       it.value != null ? it.value : (it.price != null ? it.price : 0),
+      });
+    });
+  }
+
   async function getRates({ toAddress, weight, weightUnit, length, width,
   height, sizeUnit, items }) {
     const body = {
@@ -76,7 +91,7 @@
       height,
       package_type: 'Parcel',
       region:       REGION,
-      items:        items || [],
+      items:        normalizeItems(items),
     };
 
     const data  = await stallionFetch('POST', '/rates', body);
@@ -99,7 +114,7 @@
       length,
       width,
       height,
-      items:        items || [],
+      items:        normalizeItems(items),
       label_format: 'pdf',
       region:       REGION,
     };
