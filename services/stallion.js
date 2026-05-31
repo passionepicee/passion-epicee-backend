@@ -106,8 +106,8 @@
     const body = {
       from_address: ORIGIN_ADDRESS,
       to_address:   toAddress,
-      postage_type: { name: postageType },
-      package_type: { name: 'Parcel' },
+      postage_type: postageType,
+      package_type: 'Parcel',
       weight_unit:  weightUnit || 'lbs',
       weight,
       size_unit:    sizeUnit || 'in',
